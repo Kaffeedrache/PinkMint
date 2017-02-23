@@ -1,0 +1,111 @@
+<project name="pinkmint" default="dist" basedir=".">
+
+  <description>
+    Java Online Compiler
+  </description>
+
+
+  <!-- existing directories -->
+  <property name="src" location="src"/>
+  <property name="web" location="web"/>
+  <property name="lib" location="lib"/>
+
+    <!-- directories to be created -->
+  <property name="build" location="build"/>
+  <property name="buildmeta" location="${build}/META-INF"/>
+  <property name="buildweb" location="${build}/WEB-INF"/>
+  <property name="buildbin" location="${buildweb}/classes"/>
+  <property name="buildlib" location="${buildweb}/lib"/>
+  <property name="dist" location="dist"/>
+
+
+
+
+    <!--
+       ========== TARGET: INIT ==========
+    -->
+    <target name="init" description="initialize the directory structure">
+
+      <!-- Create a time stamp -->
+      <tstamp/>
+
+      <!-- Create the build directory structure -->
+      <mkdir dir="${build}"/>
+      <mkdir dir="${buildmeta}"/>
+      <mkdir dir="${buildweb}"/>
+      <mkdir dir="${buildbin}"/>
+      <mkdir dir="${buildlib}"/>
+      <mkdir dir="${buildbin}/online"/>         
+
+      <!-- Create the dist directory structure -->
+      <mkdir dir="${dist}"/>
+
+  </target>
+
+
+  
+  <!--
+     ========== TARGET: COMPILE ==========
+  -->
+  <target name="compile" description="compile the sources">
+
+    <!-- Compile the java code from ${src} into ${buildbin} -->
+    <javac srcdir="${src}" destdir="${buildbin}">
+
+      <!-- the main file -->
+      <include name="de/mint/stuttgart/JavaOnlineCompilerServlet.java" />
+      <include name="de/mint/stuttgart/MyCompiler.java" />
+
+        <!-- set the classpath -->
+      <classpath>
+         <pathelement location="${lib}/tomcat-servlet-3.1-api.jar"/>
+         <pathelement location="${lib}/tools.jar"/>
+      </classpath>
+   </javac>
+
+  </target>
+
+  
+
+   <!--
+      ========== TARGET: DIST ==========
+   -->
+  <target name="dist" depends="init,compile" description="generate the distribution">
+
+      <!-- Copy the config files and libraries 
+         Needed structure:
+            META-INF
+               MANIFEST.MF
+            WEB-INF
+               classes
+               lib
+               web.xml
+            index.html
+         -->
+      <copy file="${web}/MANIFEST.MF" todir="${buildmeta}" />
+      <copy file="${web}/web.xml" todir="${buildweb}" />
+      <copy file="${web}/index.html" todir="${build}" />
+      <copy todir="${buildlib}">
+        <fileset dir="${lib}"/>
+      </copy>
+
+      <!-- Put everything in ${build} into the war file -->
+      <jar jarfile="${dist}/jocwk.war" basedir="${build}"/>
+
+      <!-- Backup -->
+      <copy file="${dist}/jocwk.war" tofile="bak/jocw-${DSTAMP}.jar"/>
+  </target>
+
+
+  
+   <!--
+      ========== TARGET: CLEAN ==========
+   -->
+  <target name="clean" description="clean up">
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+
+
+</project>
