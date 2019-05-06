@@ -11,61 +11,71 @@ import java.nio.file.Path;
 import java.nio.charset.Charset;
 import java.io.BufferedWriter;
 
+import com.sun.tools.javac.Main;
+
+
 public class MyCompiler {
 
-   private static final String packagename = "online";
 
-   private boolean writeFile (String filename, String className, String code) throws IOException {
+   private static class NameManager {
+      private static final String packageName = "online";
+      private static String className;
+      private static String sessionID;
+      public NameManager(String className, String sessionID) {
+         this.className = className;
+         this.sessionID = sessionID;
+      }
+      public String getFileName() {
+         return packageName + "/" + className + ".java";
+      }
 
-      		Path p = FileSystems.getDefault().getPath(filename);
-      		BufferedWriter output = Files.newBufferedWriter(p,Charset.forName("UTF-8"));
-            //PrintStream output = new PrintStream(new FileOutputStream(filename));
-            //output.println("package " + packagename + ";");
-            output.write("package " + packagename + ";");
-            output.newLine();
-            output.write("public class " + className + " {");
-            output.newLine();
-            output.write("   public static void main  (String[] args) {");
-            output.newLine();
-            output.write(code);
-            output.newLine();
-            output.write("   }");
-            output.newLine();
-            output.write("}");
-            output.flush();
-
-            output.close();
-
-         return true;
+      public String getPackageName() {
+         return packageName;
+      }
+      public String getFullClassName() {
+         return packageName + "." + className;
+      }
    }
+
+   private NameManager nm;
+
 
 
    private boolean compileFile (String filename) throws IOException {
 
-            PrintWriter compilerErrorsOut = new PrintWriter(new FileOutputStream("compileerrors.txt"));
-            int errorCode = com.sun.tools.javac.Main.compile(new String[] {
-                  //"-classpath", ".",
-                  //"-d", packagename,
-                  filename }, compilerErrorsOut);
-            if (errorCode != 0) {
-               System.out.println(errorCode);
-            }
+      try {
+         // PrintWriter(OutputStream out) 
+      PrintWriter compilerErrorsOut = new PrintWriter(new FileOutputStream("compileerrors.txt"));
+      int errorCode = Main.compile(
+         new String[] {
+            filename },
+            compilerErrorsOut);
+         if (errorCode != 0) {
+            System.out.println(errorCode);
+            return false;
+         }
+      } catch (Exception e) {
+         e.printStackTrace();
+         return false;
+      }
 
-            return true;
+      return true;
    }
+
+
+
 
 
    private boolean loadClass (String className)  {
 
-      System.out.println("load class " + className);
+      System.out.println("Load class " + className);
       try {
-         Class<?> newClass = Class.forName(className); 
-         System.out.println(newClass);
-         //newClass.main(args);
-         java.lang.reflect.Method meth = newClass.getMethod("main", String[].class);
+         Class<?> newClass = Class.forName(className);
+         Method meth = newClass.getMethod("main", String[].class);
+         System.out.println("Calling method " + meth);
          String[] params= {}; // init params accordingly
          meth.invoke(null, (Object) params);
-         System.out.println("Das wars hier"); 
+         System.out.println("Das wars hier");
          // https://www.philipphauer.de/study/se/classloader.php
       } catch (ClassNotFoundException e) {
          e.printStackTrace();
@@ -75,13 +85,10 @@ public class MyCompiler {
       } catch (SecurityException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
-      } catch (IllegalAccessException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } catch (IllegalArgumentException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
       } catch (InvocationTargetException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      } catch (IllegalAccessException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
@@ -92,19 +99,17 @@ public class MyCompiler {
 
 
 
-   public String doCompile (String className, String code) throws IOException {
-      System.out.println(className);
-      System.out.println(code);
+   public String doCompile (String className, String code)
+         throws IOException {
+      System.out.println("Print to file  " + nm.getFileName());
 
-      String filename = packagename + "/" + className + ".java";
-      System.out.println("Print to file  " + filename);
-
-      if (!writeFile(filename, className, code))
+      if (!FileWriter.writeFile(nm.getFileName(), nm.getPackageName(),
+            className, code))
          return "ERROR";
 
-      compileFile(filename);
+      compileFile(nm.getFileName());
 
-      loadClass(packagename + "." + className);
+      loadClass(nm.getFullClassName());
 
       return null;
    }
@@ -114,8 +119,8 @@ public class MyCompiler {
 
    public static void main (String[] args) throws IOException {
       MyCompiler c = new MyCompiler();
-
-      c.doCompile(args[0], "System.out.println(\"Es tut wirklich\");");
+      c.nm = new NameManager(args[0],"1234");
+      c.doCompile(args[0], "System.out.println(\"Es tut wirklich\");\n System.out.println(\"Yeah!\");");
    }
 
 }

@@ -50,11 +50,12 @@
   <target name="compile" description="compile the sources">
 
     <!-- Compile the java code from ${src} into ${buildbin} -->
-    <javac srcdir="${src}" destdir="${buildbin}">
+    <javac srcdir="${src}" destdir="${buildbin}" includeantruntime="false">
 
       <!-- the main file -->
       <include name="de/mint/stuttgart/JavaOnlineCompilerServlet.java" />
       <include name="de/mint/stuttgart/MyCompiler.java" />
+      <include name="de/mint/stuttgart/FileWriter.java" />
 
         <!-- set the classpath -->
       <classpath>
